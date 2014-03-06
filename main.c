@@ -15,8 +15,9 @@ function monitor {
 		else whatever
 	sleep timeinterval
 }*/
-#include <diff.h>
-#include <openssl/md5.h>
+#include <netdb.h>       
+#include <netinet/in.h> 
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,18 +83,26 @@ void monitorfile(char *filename, int wait, char *email) {
 			printf("File Changed!!\n");
 			
 			printf("Check NOT passed %d : %d\n", cmon, fileStatNEW.st_mtime);
-			FILE *em = fopen("emtmp", "wb");
-			fprintf(em, "%s %s %s", "To: ", email, "\r\n");
-			fprintf(em, "From: filemonitor@somesite.com\r\n" );
-			fprintf(em, "\r\n" );
-			char *buff;
+			char em[100];
+			strcpy(em, "To: ");
+			strcat(em, email);
+			strcat(em, "\r\n");
+			strcat(em, "From: filemonitor@somesite.com\r\n");
+			strcat(em, "\r\n" );
+
+			char buff[100];
 			strcpy(buff, "diff -y ");
 			strcat(buff, filename);
 			strcat(buff, "  ");
 			strcat(buff, content);
-			strcat(buff, " >> emtmp");
-			printf("%s\n",buff);
-			fclose(em);
+			FILE *p;
+    			p = popen(buff, "r");
+			char diff[150];
+			strcpy(diff, "==DIFF REPORT==\n");
+		    	while(!feof(p)) {
+        			strcat(diff, fgetc(p));
+    			}
+			pclose(p);
 			system(buff);
 			monitorfile(filename, wait, email);
 
@@ -114,7 +123,7 @@ int main(int argc, char *argv[] ) {
 //we can discuss
 
 //foreach parsed line do; fork {
-monitorfile("test", 1,"killerkyle113@gmail.com");
+monitorfile("test", 15,"killerkyle113@gmail.com");
 //}
 
 
