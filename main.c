@@ -29,7 +29,7 @@ function monitor {
 char tmpdir[100]="tmpdir/\0";
 
 
-void monitorfile(char *filename, int wait) {
+void monitorfile(char *filename, int wait, char *email) {
         struct stat fileStat;
         if(stat(filename,&fileStat) < 0) {
                 printf("Error: Cannot stat %s\n", filename);
@@ -66,7 +66,7 @@ void monitorfile(char *filename, int wait) {
                putc(ch,fp2);
     	}
         fclose(fp);
-//	fclose(fp2);
+	fclose(fp2);
 	fclose(f);
 	struct stat fileStatNEW;	
 	while (1) {
@@ -77,8 +77,14 @@ void monitorfile(char *filename, int wait) {
                		 }
 
 		 if (cmon != fileStatNEW.st_mtime) { 
-			printf("File Changed!!");
-			return 1;
+			printf("File Changed!!\n");
+			
+			//need to figure out mail and diff for mail still
+
+			
+			//start monitoring again
+			monitorfile(filename, wait, email);
+
 			} 
 			else{printf("Check passed %d : %d\n", cmon, fileStatNEW.st_mtime);
 			}
@@ -95,8 +101,9 @@ int main(int argc, char *argv[] ) {
 // I think forking. He said in lecture forking was used to daemonize things
 //we can discuss
 
-
-monitorfile("test", 3);
+//foreach parsed line do; fork {
+monitorfile("test", 3,"killerkyle113@gmail.com");
+//}
 
 
 }
