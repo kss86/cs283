@@ -15,6 +15,7 @@ function monitor {
 		else whatever
 	sleep timeinterval
 }*/
+#include <diff.h>
 #include <openssl/md5.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -69,20 +70,31 @@ void monitorfile(char *filename, int wait, char *email) {
 	fclose(fp2);
 	fclose(f);
 	struct stat fileStatNEW;	
+	int *x;
 	while (1) {
-		int x;
+		struct stat fileStatNEW;
 		x = stat(filename,&fileStatNEW);
-		if(x < 0) {
+		 if(x < 0) {
                 		printf("Error: Cannot stat %s :: error code: %i \n", filename, x);
                		 }
 
 		 if (cmon != fileStatNEW.st_mtime) { 
 			printf("File Changed!!\n");
 			
-			//need to figure out mail and diff for mail still
-
-			
-			//start monitoring again
+			printf("Check NOT passed %d : %d\n", cmon, fileStatNEW.st_mtime);
+			FILE *em = fopen("emtmp", "wb");
+			fprintf(em, "%s %s %s", "To: ", email, "\r\n");
+			fprintf(em, "From: filemonitor@somesite.com\r\n" );
+			fprintf(em, "\r\n" );
+			char *buff;
+			strcpy(buff, "diff -y ");
+			strcat(buff, filename);
+			strcat(buff, "  ");
+			strcat(buff, content);
+			strcat(buff, " >> emtmp");
+			printf("%s\n",buff);
+			fclose(em);
+			system(buff);
 			monitorfile(filename, wait, email);
 
 			} 
@@ -102,7 +114,7 @@ int main(int argc, char *argv[] ) {
 //we can discuss
 
 //foreach parsed line do; fork {
-monitorfile("test", 3,"killerkyle113@gmail.com");
+monitorfile("test", 1,"killerkyle113@gmail.com");
 //}
 
 
