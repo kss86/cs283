@@ -45,7 +45,7 @@ void monitorfile(char *filename, int wait) {
 	f = fopen(path, "w");
 	fprintf(f,"Last Access: %d\n", fileStat.st_atime);	
 	fprintf(f,"Last Modified: %d\n", fileStat.st_mtime);
-	static time_t cmon = fileStat.st_mtime;
+	time_t *cmon = fileStat.st_mtime;
 	fprintf(f,"Last Status Change: %d\n", fileStat.st_ctime);
 	
 	fprintf(f,"Mode: %d\n", fileStat.st_mode);
@@ -55,12 +55,18 @@ void monitorfile(char *filename, int wait) {
 	fp = fopen(filename, "r");
 	fp2 = fopen(content, "w");
 	char line[128];
-	while( fgets(line,sizeof line, fp) != NULL )
-        {
-            fputs(line, fp2);
-        }
-        fclose(fp);
+	char ch;
+	while(1)
+    	{
+    	   ch = fgetc(fp);
 
+       	   if(ch==EOF)
+               break;
+       	   else
+               putc(ch,fp2);
+    	}
+        fclose(fp);
+//	fclose(fp2);
 	fclose(f);
 	struct stat fileStatNEW;	
 	while (1) {
@@ -68,16 +74,14 @@ void monitorfile(char *filename, int wait) {
 		x = stat(filename,&fileStatNEW);
 		if(x < 0) {
                 		printf("Error: Cannot stat %s :: error code: %i \n", filename, x);
-               		 	}
-		if (cmon != &fileStatNEW.st_mtime) { 
-			//file attrs have changed, also sent email of attr diff
-			printf("File Changed!!");
-			
-			} 
-		else {printf("Check passed %d : %d\n", cmon, fileStatNEW.st_mtime);
+               		 }
 
-		
-		}
+		 if (cmon != fileStatNEW.st_mtime) { 
+			printf("File Changed!!");
+			return 1;
+			} 
+			else{printf("Check passed %d : %d\n", cmon, fileStatNEW.st_mtime);
+			}
 	sleep(wait);
 	}	
 
