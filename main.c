@@ -75,21 +75,13 @@ void monitorfile(char *filename, int wait, char *email) {
 	while (1) {
 		struct stat fileStatNEW;
 		x = stat(filename,&fileStatNEW);
-		 if(x < 0) {
-                		printf("Error: Cannot stat %s :: error code: %i \n", filename, x);
+		if(x < 0) {
+                	printf("Error: Cannot stat %s :: error code: %i \n", filename, x);
                		 }
 
 		 if (cmon != fileStatNEW.st_mtime) { 
 			printf("File Changed!!\n");
-			
 			printf("Check NOT passed %d : %d\n", cmon, fileStatNEW.st_mtime);
-			char em[100];
-			strcpy(em, "To: ");
-			strcat(em, email);
-			strcat(em, "\r\n");
-			strcat(em, "From: filemonitor@somesite.com\r\n");
-			strcat(em, "\r\n" );
-
 			char buff[100];
 			strcpy(buff, "diff -y ");
 			strcat(buff, filename);
@@ -98,12 +90,23 @@ void monitorfile(char *filename, int wait, char *email) {
 			FILE *p;
     			p = popen(buff, "r");
 			char diff[150];
-			strcpy(diff, "==DIFF REPORT==\n");
-		    	while(!feof(p)) {
-        			strcat(diff, fgetc(p));
+			char line[100];
+
+			strcpy(diff, "DIFF REPORT:");
+		    	while(fgets(line, sizeof(line)-1, p) != NULL) {
+        			strcat(diff, line);
     			}
 			pclose(p);
-			system(buff);
+
+			char mailcmd[400];
+			strcpy(mailcmd, "echo \'");
+			strcat(mailcmd, diff);
+			strcat(mailcmd, "\' | mail -s \'");
+			strcat(mailcmd, filename);
+
+			strcat(mailcmd, " has changed!!\' ");
+			strcat(mailcmd, email);
+			system(mailcmd);
 			monitorfile(filename, wait, email);
 
 			} 
