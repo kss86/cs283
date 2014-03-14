@@ -10,11 +10,12 @@ function monitor {
 	put md5sum in mem somewhere
 	copyfile to storage directory
 	while (true)
-		if md5_is_different()
+		if modtime_differet()
 			whatever
 		else whatever
 	sleep timeinterval
 }*/
+#include <pthread.h>
 #include <netdb.h>       
 #include <netinet/in.h> 
 #include <sys/socket.h>
@@ -29,10 +30,24 @@ function monitor {
 
 //global temp storage directory to keep the files
 char tmpdir[100]="tmpdir/\0";
+typedef struct {
+	char *filename;
+	int wait;
+	char *email;
+} mon_prop;
 
+void *monitorfile(void *ptr) {
 
-void monitorfile(char *filename, int wait, char *email) {
-        struct stat fileStat;
+	mon_prop *frompthread;
+	frompthread = (mon_prop *) ptr;
+	char *filename;
+	char *email;
+	int wait;
+	filename=frompthread->filename;
+	email=frompthread->email;
+	wait=frompthread->wait;
+        printf("::Monitoring Started::\nfilename=%s email=%s wait=%i\n", filename,email,wait);
+	struct stat fileStat;
         if(stat(filename,&fileStat) < 0) {
                 printf("Error: Cannot stat %s\n", filename);
                 }
@@ -74,6 +89,7 @@ void monitorfile(char *filename, int wait, char *email) {
 	int *x;
 	while (1) {
 		struct stat fileStatNEW;
+		printf("%s :: ",filename);
 		x = stat(filename,&fileStatNEW);
 		if(x < 0) {
                 	printf("Error: Cannot stat %s :: error code: %i \n", filename, x);
@@ -107,8 +123,11 @@ void monitorfile(char *filename, int wait, char *email) {
 			strcat(mailcmd, " has changed!!\' ");
 			strcat(mailcmd, email);
 			system(mailcmd);
-			monitorfile(filename, wait, email);
-
+			//old respawn 
+			//monitorfile(filename, wait, email);
+			//cant respawn to continue monitoring like this anymore
+			// we need something in main that catches when this thread ends and respawns it
+			printf("Thread done, change detected, respawning.");
 			} 
 			else{printf("Check passed %d : %d\n", cmon, fileStatNEW.st_mtime);
 			}
@@ -125,9 +144,27 @@ int main(int argc, char *argv[] ) {
 // I think forking. He said in lecture forking was used to daemonize things
 //we can discuss
 
-//foreach parsed line do; fork {
-monitorfile("test", 15,"killerkyle113@gmail.com");
+//foreach parsed line do; {
+int pid;
+//thread identifier
+pthread_t some_thread,some_thread2;
+//an instance of our void* struct
+mon_prop data,data2;
+//set the crap
+data.filename="test";
+data.wait=15;
+data.email="killerkyle113@gmail.com";
+data2.filename="test2";
+data2.wait=7;
+data2.email="killerkyle113@gmail.com";
+//make a thread , add check for if pid != 0, error
+pid = pthread_create(&some_thread, NULL, (void *) &monitorfile, (void*) &data);
+pid = pthread_create(&some_thread, NULL, (void *) &monitorfile, (void*) &data2);
+//i forgot about this and it fucked me. If you dont have this for
+//each spawned thread the program just coninues on and exits. Then
+//since it exits, all its thread die. 
+pthread_join(some_thread, NULL);
+pthread_join(some_thread2, NULL);
 //}
-
-
 }
+
