@@ -128,6 +128,10 @@ void *monitorfile(void *ptr) {
 			//cant respawn to continue monitoring like this anymore
 			// we need something in main that catches when this thread ends and respawns it
 			printf("Thread done, change detected, respawning.");
+			pthread_t *new;
+			new=pthread_self();
+			pthread_create(&new, NULL, (void *) &monitorfile, (void*) frompthread);
+			pthread_join(&new, NULL);
 			} 
 			else{printf("Check passed %d : %d\n", cmon, fileStatNEW.st_mtime);
 			}
@@ -145,26 +149,24 @@ int main(int argc, char *argv[] ) {
 //we can discuss
 
 //foreach parsed line do; {
-int pid;
 //thread identifier
 pthread_t some_thread,some_thread2;
+int id;
 //an instance of our void* struct
 mon_prop data,data2;
 //set the crap
 data.filename="test";
-data.wait=15;
+data.wait=3;
 data.email="killerkyle113@gmail.com";
 data2.filename="test2";
 data2.wait=7;
 data2.email="killerkyle113@gmail.com";
-//make a thread , add check for if pid != 0, error
-pid = pthread_create(&some_thread, NULL, (void *) &monitorfile, (void*) &data);
-pid = pthread_create(&some_thread, NULL, (void *) &monitorfile, (void*) &data2);
+//make a thread , add check for if id != 0, error
+id = pthread_create(&some_thread, NULL, (void *) &monitorfile, (void*) &data);
 //i forgot about this and it fucked me. If you dont have this for
 //each spawned thread the program just coninues on and exits. Then
 //since it exits, all its thread die. 
 pthread_join(some_thread, NULL);
-pthread_join(some_thread2, NULL);
 //}
 }
 
