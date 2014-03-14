@@ -108,7 +108,7 @@ void *monitorfile(void *ptr) {
 			char diff[150];
 			char line[100];
 
-			strcpy(diff, "DIFF REPORT:");
+			strcpy(diff, "DIFF REPORT:\n");
 		    	while(fgets(line, sizeof(line)-1, p) != NULL) {
         			strcat(diff, line);
     			}
